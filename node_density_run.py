@@ -14,8 +14,8 @@ def signal_handler(sig, frame):
         sys.exit(0)
 
 def make_pos(n):
-	start = -1
-	end = 750
+	start = 1
+	end = 500
 	pos = []
 	x=start
 	for k in range(n+1):
@@ -28,9 +28,9 @@ def make_pos(n):
 signal.signal(signal.SIGINT, signal_handler)
 
 #Defining various node densities here
-pos1 = make_pos(10)
-pos2 = make_pos(50)
-pos3 = make_pos(25)
+pos1 = make_pos(1)
+pos2 = make_pos(3)
+pos3 = make_pos(5)
 
 #Running the real and 3 estimates here
 a=[]
@@ -38,7 +38,7 @@ e1=[]
 e2=[]
 e3=[]
 
-num_run = 50
+num_run = 25
 
 for f in range(num_run):
 	print(f)
@@ -47,7 +47,7 @@ for f in range(num_run):
 	init_variance = np.diag([1,1])
 	Q = np.diag([0.01,0.0001])
 	R = 100
-	num_iter = 150
+	num_iter = 300
 	x = np.copy(init_x)
 	real_x = []
 	real_obs = []
@@ -77,6 +77,7 @@ for f in range(num_run):
 		prediction_x.append(imukf.x_predicted[0])
 		prediction_v.append(imukf.x_predicted[1])
 	e3.append(prediction_x)
+	del imukf
 
 	imukf = centre(len(pos2),pos2,np.copy(init_est_x),np.copy(init_variance),Q,R)
 	prediction_x = []
@@ -86,6 +87,7 @@ for f in range(num_run):
 		prediction_x.append(imukf.x_predicted[0])
 		prediction_v.append(imukf.x_predicted[1])
 	e2.append(prediction_x)
+	del imukf
 
 	imukf = centre(len(pos1),pos1,np.copy(init_est_x),init_variance,Q,R)
 	prediction_x = []
@@ -102,16 +104,18 @@ assert len(e2)==len(e2)
 assert len(a)==len(e2)
 
 n=20
-real_x = mv(np.mean(a,axis=0),n=n)
-x1 = mv(np.mean(e1,axis=0),n=n)
-x2 = mv(np.mean(e2,axis=0),n=n)
-x3 = mv(np.mean(e3,axis=0),n=n)
+real_x = mv(np.mean(a,axis=0),n=n)[:100]
+x1 = mv(np.mean(e1,axis=0),n=n)[:100]
+x2 = mv(np.mean(e2,axis=0),n=n)[:100]
+x3 = mv(np.mean(e3,axis=0),n=n)[:100]
 
 fig=plt.figure()
+plt.title('Mean Position Error vs Time')
+plt.xlabel('Time')
+plt.ylabel('Mean Error')
 plt.plot(abs(x1-real_x))
 plt.plot(abs(x2-real_x))
 plt.plot(abs(x3-real_x))
 plt.legend(['Low','Medium','High'])
-print('Press Ctrl+C')
-# signal.pause()
+plt.savefig('density.png')
 plt.show()
